@@ -4,11 +4,30 @@ Mở tối đa 4 task trong một cửa sổ Windows Terminal, chia lưới. M�
 
 ## Dùng
 
-Đứng trong repo cần làm (hoặc truyền `-Repo`):
+Trong một phiên Claude Code mở ở repo cần làm (cài plugin xem mục bên dưới):
+
+```
+/task-grid:open guard-ai fence-ui fix/noise .
+```
+
+Hoặc từ terminal, đứng trong repo (hoặc truyền `-Repo`):
 
 ```
 task-grid guard-ai fence-ui fix/noise .
 ```
+
+Lệnh trên mở một cửa sổ mới chia 2×2:
+
+| Ô | Thư mục | Nhánh |
+| --- | --- | --- |
+| `guard-ai` (trên trái) | `<repo>-worktrees\guard-ai` | `feat/guard-ai` (mới, tách từ `origin/main`) |
+| `fence-ui` (trên phải) | `<repo>-worktrees\fence-ui` | `feat/fence-ui` |
+| `fix/noise` (dưới trái) | `<repo>-worktrees\fix-noise` | `fix/noise` |
+| `.` (dưới phải) | thư mục chính của repo | nhánh đang checkout ở đó |
+
+`<repo>-worktrees` là thư mục nằm cạnh repo, ví dụ `E:\Work\MyGame-worktrees\` cho `E:\Work\MyGame`.
+
+Các đối số (dùng giống nhau cho cả hai cách gọi):
 
 | Đối số | Ý nghĩa |
 | --- | --- |
