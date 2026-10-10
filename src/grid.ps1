@@ -144,32 +144,42 @@ function SplitSize($k) {
     return ([double]($k - 1) / $k).ToString('0.####', $inv)
 }
 
+# Panes must be independent Claude sessions: when this runs from inside Claude Code,
+# its session variables (CLAUDECODE, CLAUDE_CODE_CHILD_SESSION, ...) would leak into
+# every pane and turn off transcript saving there.
+Get-ChildItem Env: | Where-Object { $_.Name -match '^(CLAUDECODE|CLAUDE_|CODEX_COMPANION_)' } |
+    ForEach-Object { Remove-Item "Env:$($_.Name)" }
+
 # Pane i sits at row [i / cols], column [i % cols] (reading order).
 # Build order: the top pane of every column, then each column downwards.
-# wt numbers panes 0,1,2... in creation order; every split first focuses its target
-# pane by that id, because wt does not reliably move focus to the newest pane.
+# wt numbers panes 0,1,2... in creation order. Each split is a separate wt call into a
+# named window that first focuses its target pane by id, with a pause in between:
+# a freshly created pane grabs focus asynchronously, and inside one wt command line
+# that late focus can redirect the next split to the wrong pane.
+$window = 'grid-' + (Get-Date -Format 'HHmmssfff')
 $paneId = @{}
 $nextId = 0
-$wtArgs = @('-M', '-w', 'new', 'new-tab') + (PaneArgs $panes[0])
-$paneId[0] = $nextId++
 
-function AddSplit($from, $to, $dir, $k) {
-    $script:wtArgs += @(';', 'focus-pane', '-t', $script:paneId[$from],
-                        ';', 'split-pane', $dir, '-s', (SplitSize $k)) + (PaneArgs $panes[$to])
+& wt.exe @(@('-M', '-w', $window, 'new-tab') + (PaneArgs $panes[0]))
+$paneId[0] = $nextId++
+Start-Sleep -Milliseconds 1200
+
+function AddPane($from, $to, $dir, $k) {
+    & wt.exe @(@('-w', $window, 'focus-pane', '-t', $script:paneId[$from],
+                 ';', 'split-pane', $dir, '-s', (SplitSize $k)) + (PaneArgs $panes[$to]))
     $script:paneId[$to] = $script:nextId++
+    Start-Sleep -Milliseconds 500
 }
 
 for ($c = 1; $c -lt $cols; $c++) {
-    AddSplit ($c - 1) $c '-V' ($cols - $c + 1)
+    AddPane ($c - 1) $c '-V' ($cols - $c + 1)
 }
 for ($c = 0; $c -lt $cols; $c++) {
     $colRows = @(0..($rows - 1) | Where-Object { $_ * $cols + $c -lt $count }).Count
     for ($r = 1; $r -lt $colRows; $r++) {
-        AddSplit (($r - 1) * $cols + $c) ($r * $cols + $c) '-H' ($colRows - $r + 1)
+        AddPane (($r - 1) * $cols + $c) ($r * $cols + $c) '-H' ($colRows - $r + 1)
     }
 }
-
-& wt.exe @wtArgs
 
 Write-Host ""
 Write-Host "Opened $count pane(s) as ${rows}x${cols}."

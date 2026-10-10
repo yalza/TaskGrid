@@ -1,7 +1,7 @@
 {
   "name": "task-grid",
   "displayName": "Task Grid",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Open git-worktree task panes, each running claude, in one Windows Terminal grid of any size (e.g. 2x3)",
   "author": {
     "name": "yalza"

@@ -36,7 +36,9 @@ Hai cách gọi nhận cùng đối số. Ví dụ:
 | `-Command "<lệnh>"` | lệnh chạy trong mỗi ô (mặc định `claude`), ví dụ `-Command "claude --continue"` |
 | `-Repo <path>` | repo đích (mặc định: thư mục hiện tại) |
 
-Các ô xếp theo thứ tự đọc: trái sang phải, rồi trên xuống dưới. Không ghi kích thước thì lưới tự chọn theo số task. Cửa sổ mở ở chế độ phóng to toàn màn hình.
+Các ô xếp theo thứ tự đọc: trái sang phải, rồi trên xuống dưới. Không ghi kích thước thì lưới tự chọn theo số task. Cửa sổ mở ở chế độ phóng to toàn màn hình, các ô được tách lần lượt (khoảng nửa giây mỗi ô) để Windows Terminal không tách nhầm ô.
+
+Mỗi ô là một phiên Claude độc lập, kể cả khi gọi `/grid` từ trong Claude (biến môi trường của phiên đang chạy không bị truyền xuống), nên lịch sử phiên được lưu và `--resume` được. Worktree mới sẽ hỏi "trust this folder" một lần ở lần mở đầu tiên.
 
 `<repo>-worktrees` là thư mục nằm cạnh repo, ví dụ `E:\Work\MyGame-worktrees\` cho `E:\Work\MyGame`.
 
