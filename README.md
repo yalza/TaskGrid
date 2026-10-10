@@ -27,18 +27,16 @@ Bố cục: 1 ô = toàn màn, 2 = trái/phải, 3 = 2 trên + 1 dưới trái, 
 
 ## Cài dạng plugin Claude Code
 
-Trong một phiên Claude Code (máy cần có quyền đọc repo `yalza/TaskGrid` trên GitHub):
+Plugin được liệt kê trong marketplace `pc-tools` ([yalza/claude-pc-commands](https://github.com/yalza/claude-pc-commands)). Trong một phiên Claude Code:
 
 ```
-/plugin install task-grid --marketplace yalza/TaskGrid
+/plugin marketplace add yalza/claude-pc-commands
+/plugin install task-grid@pc-tools
 ```
 
-Hoặc từ shell:
+Máy đã add `pc-tools` rồi thì chỉ cần `/plugin marketplace update pc-tools` rồi lệnh install.
 
-```
-claude plugin marketplace add yalza/TaskGrid
-claude plugin install task-grid@yalza-tools
-```
+Sửa plugin: tăng `version` trong `.claude-plugin/plugin.json` rồi push, máy khác chạy `/plugin marketplace update pc-tools` để nhận bản mới.
 
 Sau đó gọi trong phiên: `/task-grid:open guard-ai fence-ui fix/noise .`
 
