@@ -1,68 +1,73 @@
 # TaskGrid
 
-Mở tối đa 4 task trong một cửa sổ Windows Terminal, chia lưới. Mỗi task có git worktree và nhánh riêng, mỗi ô tự chạy `claude`.
+Mở nhiều task song song trong một cửa sổ Windows Terminal, chia lưới bao nhiêu ô cũng được (ví dụ 2×3). Mỗi task có git worktree và nhánh riêng, mỗi ô tự chạy `claude`. Chỉ chạy trên Windows.
 
 ## Dùng
 
-Trong một phiên Claude Code mở ở repo cần làm (cài plugin xem mục bên dưới):
+Trong Claude Code (mở ở repo cần làm):
 
 ```
-/task-grid:open guard-ai fence-ui fix/noise .
+/grid 2x3
 ```
 
-Hoặc từ terminal, đứng trong repo (hoặc truyền `-Repo`):
+Ngoài terminal, đứng trong repo:
 
 ```
-task-grid guard-ai fence-ui fix/noise .
+grid 2x3
 ```
 
-Lệnh trên mở một cửa sổ mới chia 2×2:
+Hai cách gọi nhận cùng đối số. Ví dụ:
 
-| Ô | Thư mục | Nhánh |
-| --- | --- | --- |
-| `guard-ai` (trên trái) | `<repo>-worktrees\guard-ai` | `feat/guard-ai` (mới, tách từ `origin/main`) |
-| `fence-ui` (trên phải) | `<repo>-worktrees\fence-ui` | `feat/fence-ui` |
-| `fix/noise` (dưới trái) | `<repo>-worktrees\fix-noise` | `fix/noise` |
-| `.` (dưới phải) | thư mục chính của repo | nhánh đang checkout ở đó |
-
-`<repo>-worktrees` là thư mục nằm cạnh repo, ví dụ `E:\Work\MyGame-worktrees\` cho `E:\Work\MyGame`.
-
-Các đối số (dùng giống nhau cho cả hai cách gọi):
+| Lệnh | Kết quả |
+| --- | --- |
+| `/grid 2x3` | 2 hàng × 3 cột, 6 ô `t1`…`t6` |
+| `/grid 4` | 4 ô `t1`…`t4`, tự xếp 2×2 |
+| `/grid 2x3 guard-ai fence-ui` | lưới 2×3: ô 1–2 là `guard-ai`, `fence-ui`, ô 3–6 là `t1`…`t4` |
+| `/grid guard-ai fence-ui fix/noise .` | 4 task, tự xếp 2×2, ô cuối là thư mục chính |
 
 | Đối số | Ý nghĩa |
 | --- | --- |
+| `RxC` | kích thước lưới, **hàng × cột** (`2x3` = 2 hàng, 3 cột). Ô thiếu tên tự đặt `t1`, `t2`, … |
+| `N` | số ô; lưới tự chọn (3 → 2×2 thiếu một ô, 5 hoặc 6 → 2×3, 9 → 3×3) |
 | `guard-ai` | worktree `<repo>-worktrees\guard-ai`, nhánh `feat/guard-ai` |
-| `fix/noise` | tên có `/` thì giữ nguyên làm tên nhánh |
-| `.` | ô mở ở thư mục chính của repo |
-| `-Repo <path>` | repo đích (mặc định: thư mục hiện tại) |
+| `fix/noise` | tên có `/` thì giữ nguyên làm tên nhánh (thư mục `fix-noise`) |
+| `.` | ô mở ở thư mục chính của repo, không tạo worktree |
 | `-Base <ref>` | điểm xuất phát nhánh mới (mặc định `origin/main`, tự fetch) |
-| `-Command "<lệnh>"` | lệnh chạy trong mỗi ô (mặc định `claude`) |
+| `-Command "<lệnh>"` | lệnh chạy trong mỗi ô (mặc định `claude`), ví dụ `-Command "claude --continue"` |
+| `-Repo <path>` | repo đích (mặc định: thư mục hiện tại) |
 
-Bố cục: 1 ô = toàn màn, 2 = trái/phải, 3 = 2 trên + 1 dưới trái, 4 = lưới 2×2.
+Các ô xếp theo thứ tự đọc: trái sang phải, rồi trên xuống dưới. Không ghi kích thước thì lưới tự chọn theo số task. Cửa sổ mở ở chế độ phóng to toàn màn hình.
 
-- Chạy lại cùng tên task thì dùng lại worktree/nhánh cũ.
-- Nhánh mới tạo với `--no-track`, không pull/push nhầm vào `main`.
-- Dọn task đã merge: `git worktree remove <repo>-worktrees\<task>` (đóng ô đang mở thư mục đó trước).
+`<repo>-worktrees` là thư mục nằm cạnh repo, ví dụ `E:\Work\MyGame-worktrees\` cho `E:\Work\MyGame`.
+
+- **Mở lại task đang làm dở:** gõ lại cùng tên (kể cả `t1`, `t2`, …), worktree và nhánh cũ được dùng lại.
+- **Nhánh an toàn:** nhánh mới tạo với `--no-track`, nên pull/push trong ô không đụng vào `main`.
+- **Dọn task đã merge** (đóng ô đang mở thư mục đó trước, vì Windows khóa thư mục):
+  ```
+  git worktree remove <repo>-worktrees\<task>
+  git branch -d <nhánh>
+  ```
 
 ## Cài dạng plugin Claude Code
 
-Plugin được liệt kê trong marketplace `pc-tools` ([yalza/claude-pc-commands](https://github.com/yalza/claude-pc-commands)). Trong một phiên Claude Code:
+Plugin nằm trong marketplace `pc-tools` ([yalza/claude-pc-commands](https://github.com/yalza/claude-pc-commands)):
 
 ```
 /plugin marketplace add yalza/claude-pc-commands
 /plugin install task-grid@pc-tools
+/reload-plugins
 ```
 
-Máy đã add `pc-tools` rồi thì chỉ cần `/plugin marketplace update pc-tools` rồi lệnh install.
+Máy đã add `pc-tools` thì chạy `/plugin marketplace update pc-tools`, rồi lệnh install (hoặc `/plugin` để cập nhật) và `/reload-plugins`.
+
+`/grid` là tên ngắn. Nếu trùng với plugin khác thì dùng tên đầy đủ `/task-grid:grid`.
 
 Sửa plugin: tăng `version` trong `.claude-plugin/plugin.json` rồi push, máy khác chạy `/plugin marketplace update pc-tools` để nhận bản mới.
 
-Sau đó gọi trong phiên: `/task-grid:open guard-ai fence-ui fix/noise .`
-
 ## Cài dạng lệnh terminal
 
-Thêm thư mục này vào `PATH` của user để gọi `task-grid` từ bất kỳ đâu. Script thật nằm ở `src/` để lệnh `task-grid` luôn chạy qua `task-grid.cmd` (có `-ExecutionPolicy Bypass`), không bị execution policy Restricted chặn.
+Clone repo này, thêm thư mục vào `PATH` của user để gọi `grid` từ bất kỳ đâu. Script thật nằm ở `src/`, nên lệnh `grid` luôn chạy qua `grid.cmd` (có `-ExecutionPolicy Bypass`) và không bị execution policy Restricted chặn.
 
 ## Lưu ý với Unity
 
-Worktree không có `Library/` và không có Editor mở trên nó. Claude trong worktree không nên gọi unity-mcp (nó sẽ thao tác Editor của thư mục chính). Kiểm tra trong Editor bằng cách checkout nhánh ở thư mục chính.
+Worktree không có `Library/` và không có Editor mở trên nó. Claude trong worktree không nên gọi unity-mcp, vì nó sẽ thao tác Editor của thư mục chính. Muốn kiểm tra trong Editor thì checkout nhánh ở thư mục chính.
