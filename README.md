@@ -27,7 +27,7 @@ Bố cục: 1 ô = toàn màn, 2 = trái/phải, 3 = 2 trên + 1 dưới trái, 
 
 ## Cài
 
-Thêm thư mục này vào `PATH` của user để gọi `task-grid` từ bất kỳ đâu.
+Thêm thư mục này vào `PATH` của user để gọi `task-grid` từ bất kỳ đâu. Script thật nằm ở `src/` để lệnh `task-grid` luôn chạy qua `task-grid.cmd` (có `-ExecutionPolicy Bypass`), không bị execution policy Restricted chặn.
 
 ## Lưu ý với Unity
 

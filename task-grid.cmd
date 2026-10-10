@@ -1,2 +1,2 @@
 @echo off
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0task-grid.ps1" %*
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0src\task-grid.ps1" %*
