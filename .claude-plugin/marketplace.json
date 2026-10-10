@@ -1,0 +1,14 @@
+{
+  "name": "yalza-tools",
+  "description": "yalza's Claude Code tools",
+  "owner": {
+    "name": "yalza"
+  },
+  "plugins": [
+    {
+      "name": "task-grid",
+      "source": "./",
+      "description": "Open up to 4 git-worktree task panes, each running claude, in one Windows Terminal grid"
+    }
+  ]
+}

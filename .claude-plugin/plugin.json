@@ -1,0 +1,11 @@
+{
+  "name": "task-grid",
+  "displayName": "Task Grid",
+  "version": "1.0.0",
+  "description": "Open up to 4 git-worktree task panes, each running claude, in one Windows Terminal grid",
+  "author": {
+    "name": "yalza"
+  },
+  "repository": "https://github.com/yalza/TaskGrid",
+  "keywords": ["worktree", "windows-terminal", "parallel", "tasks"]
+}

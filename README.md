@@ -25,7 +25,24 @@ Bố cục: 1 ô = toàn màn, 2 = trái/phải, 3 = 2 trên + 1 dưới trái, 
 - Nhánh mới tạo với `--no-track`, không pull/push nhầm vào `main`.
 - Dọn task đã merge: `git worktree remove <repo>-worktrees\<task>` (đóng ô đang mở thư mục đó trước).
 
-## Cài
+## Cài dạng plugin Claude Code
+
+Trong một phiên Claude Code (máy cần có quyền đọc repo `yalza/TaskGrid` trên GitHub):
+
+```
+/plugin install task-grid --marketplace yalza/TaskGrid
+```
+
+Hoặc từ shell:
+
+```
+claude plugin marketplace add yalza/TaskGrid
+claude plugin install task-grid@yalza-tools
+```
+
+Sau đó gọi trong phiên: `/task-grid:open guard-ai fence-ui fix/noise .`
+
+## Cài dạng lệnh terminal
 
 Thêm thư mục này vào `PATH` của user để gọi `task-grid` từ bất kỳ đâu. Script thật nằm ở `src/` để lệnh `task-grid` luôn chạy qua `task-grid.cmd` (có `-ExecutionPolicy Bypass`), không bị execution policy Restricted chặn.
 
