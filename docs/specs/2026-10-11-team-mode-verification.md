@@ -21,6 +21,11 @@ Claude Code 2.1.296, Windows 11, Windows PowerShell 5.1. Spike scratch: `%TEMP%\
 - Second message told it to call ToolSearch `select:SendMessage,ListAgents` first. `spike-a` then replied `PONG` through SendMessage, and the reply arrived in the sender session.
 - **Decision:** `protocol.md` gets a rule: before the first message, load the messaging tools with ToolSearch `select:SendMessage,ListAgents`. The role templates must not set a `tools:` list (row 5).
 
+## Live test 1 (team opens, no work)
+
+- Attempt 1, scratch repo in `%TEMP%`: `grid team` created 3 worktrees and launched `crew-pm`, `crew-dev` and `crew-reviewer` (3 claude processes with the right `--name`), but none appeared in `ListAgents`. In `~/.claude.json`, `%TEMP%` has no trusted parent, so each session waits at the "trust this folder" dialog, and its inbox is not reachable until the user accepts. By contrast, the earlier grid-mode sessions in `E:\Unity-WorkSpace\TileThieves-worktrees\*` opened without a trust prompt, because `E:/Unity-WorkSpace` is trusted (a trusted parent covers children).
+- **Decision:** README tells users to trust the folder that contains their repos once. The live tests move to `E:\Unity-WorkSpace\_tg-live\app` (trusted parent).
+
 ## Other notes
 
 - `claude -p` runs launched from inside a Claude session must clear the session variables first, otherwise they run as child sessions.

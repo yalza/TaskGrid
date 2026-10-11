@@ -60,7 +60,7 @@ Bảng task, luật chung và log nằm ở `<repo>-worktrees\_team\`, ngoài gi
 
 Lưu ý:
 - Thành viên ngồi ở thư mục chính (Unity integrator) yêu cầu thư mục chính sạch. Trong lúc đội chạy, đừng làm việc ở thư mục chính, và tắt các công cụ tự đụng vào git (ví dụ Auto Sync của TileThieves).
-- Worktree mới hỏi "trust this folder" một lần.
+- Phiên trong một thư mục chưa trust sẽ đứng chờ ở hộp thoại "trust this folder", và chưa nhận được tin nhắn cho đến khi bạn chọn Yes. Thư mục cha đã trust thì thư mục con khỏi hỏi. Vì vậy hãy trust thư mục chứa repo một lần (ví dụ `E:\Unity-WorkSpace`), khi đó mọi worktree `<repo>-worktrees\...` đều mở thẳng.
 - Lời hỏi quyền hiện trong ô của từng thành viên. PM không duyệt hộ được.
 
 ## Mẹo
