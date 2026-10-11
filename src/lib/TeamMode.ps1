@@ -55,6 +55,34 @@ function Test-MainCheckoutClean([string]$RepoRoot) {
     return -not $status
 }
 
+# Session names (--name) of claude processes running on this machine.
+function Get-RunningSessionNames {
+    $names = @()
+    foreach ($p in @(Get-CimInstance Win32_Process -Filter "Name='claude.exe'" -ErrorAction SilentlyContinue)) {
+        if ($p.CommandLine -match '--name\s+"?([^"\s]+)') { $names += $Matches[1] }
+    }
+    return , $names
+}
+
+# A member that is already running must not be launched twice: two processes would share
+# one session id and one messaging name.
+function Remove-RunningMembers([object[]]$Members, [string[]]$RunningNames) {
+    $keep = @()
+    $warnings = @()
+    foreach ($m in $Members) {
+        if (@($RunningNames) -contains $m.SessionName) { $warnings += "$($m.SessionName) is already running; not opening it again." }
+        else { $keep += $m }
+    }
+    return @{ Members = $keep; Warnings = $warnings }
+}
+
+# start.json records where the main checkout was when the team started. Rewriting it while
+# the Unity owner is mid-check (detached HEAD) would lose that branch.
+function Test-ShouldWriteStart([bool]$Exists, [bool]$MainMemberLaunched, [string]$Branch) {
+    if (-not $Branch) { return $false }
+    return (-not $Exists) -or $MainMemberLaunched
+}
+
 function Invoke-TeamMode {
     param(
         [string[]]$Rest = @(),
@@ -71,13 +99,25 @@ function Invoke-TeamMode {
     $checkout = Resolve-CheckoutTop $Repo
     if (@($Rest).Count -gt 0 -and $Rest[0] -eq 'init') { return (Invoke-TeamInit $checkout $Preset) }
 
+    # A member worktree on an older base may not have the config yet; use the main checkout's.
     $claudeDir = Join-Path $checkout '.claude'
+    if (-not (Test-Path (Join-Path $claudeDir 'team.json')) -and (Test-Path (Join-Path $repoRoot '.claude\team.json'))) {
+        $claudeDir = Join-Path $repoRoot '.claude'
+    }
+    Write-Host "Config: $(Join-Path $claudeDir 'team.json')"
     $config = Read-TeamConfig (Join-Path $claudeDir 'team.json')
     $problems = Test-TeamConfig $config (Join-Path $claudeDir 'agents')
     if ($problems.Count -gt 0) { throw ("team.json has problems:`n  - " + ($problems -join "`n  - ")) }
 
     $ctx = Get-TeamContext $config $repoRoot
     $members = Select-TeamMembers $ctx @($Rest)
+    $notRunning = Remove-RunningMembers $members (Get-RunningSessionNames)
+    foreach ($w in $notRunning.Warnings) { Write-Warning $w }
+    $members = @($notRunning.Members)
+    if ($members.Count -eq 0) {
+        Write-Host 'Every selected member is already running.'
+        return 0
+    }
 
     if (@($members | Where-Object { $_.IsMain }).Count -gt 0 -and -not (Test-MainCheckoutClean $repoRoot)) {
         if (-not $Force) { throw "The main checkout $repoRoot has uncommitted changes, and a member works there. Commit or stash them, or rerun with -Force." }
@@ -99,13 +139,17 @@ function Invoke-TeamMode {
 
     $sessionsPath = Join-Path $team 'sessions.json'
     $sessions = Read-Sessions $sessionsPath
-    $plan = Get-ResumePlan $sessions @($members | ForEach-Object { $_.Name }) $hash ([bool]$Resume)
+    $workspaces = @{}
+    foreach ($m in $ctx.Members) { $workspaces[$m.Name] = $m.Workspace }
+    $hasTranscript = { param($name, $id) Test-Path (Get-TranscriptPath $workspaces[$name] $id) }.GetNewClosure()
+    $plan = Get-ResumePlan $sessions @($members | ForEach-Object { $_.Name }) $hash ([bool]$Resume) $hasTranscript
     foreach ($w in $plan.Warnings) { Write-Warning $w }
 
     foreach ($m in $members) {
         $e = $plan.Entries[$m.Name]
         Write-Utf8File (Join-Path $team "settings\$($m.Name).json") ((New-MemberSettings $ctx $m | ConvertTo-Json -Depth 5) + "`n")
-        Write-Utf8File (Join-Path $team "launch\$($m.Name).ps1") (New-LaunchScript $ctx $m $e.Id $e.Resume)
+        # BOM: Windows PowerShell 5.1 reads a BOM-less script as ANSI and mangles non-ASCII paths.
+        Write-Utf8File (Join-Path $team "launch\$($m.Name).ps1") (New-LaunchScript $ctx $m $e.Id $e.Resume) -Bom
     }
 
     if ($DryRun) {
@@ -113,13 +157,6 @@ function Invoke-TeamMode {
         foreach ($m in $members) { Write-Host ("  {0,-24} {1}" -f $m.SessionName, $m.Workspace) }
         Write-Host "Dry run: launch scripts are in $team\launch. Nothing was opened."
         return 0
-    }
-
-    foreach ($m in $members) { $sessions[$m.Name] = @{ Id = $plan.Entries[$m.Name].Id; ProtocolHash = $hash } }
-    Write-Sessions $sessionsPath $sessions
-    if (-not $Resume) {
-        $start = [ordered]@{ branch = [string](git -C $repoRoot branch --show-current); commit = [string](git -C $repoRoot rev-parse HEAD) }
-        Write-Utf8File (Join-Path $team 'start.json') (($start | ConvertTo-Json) + "`n")
     }
 
     if ($Base -like 'origin/*') {
@@ -131,6 +168,17 @@ function Invoke-TeamMode {
         if ($m.IsMain -or (Initialize-Worktree $repoRoot $m.Workspace $m.Branch $Base $m.Name)) { $open += $m }
     }
     if ($open.Count -eq 0) { return 1 }
+
+    # Record sessions only for members that really open, so -Resume never points at a
+    # session that was never created.
+    foreach ($m in $open) { $sessions[$m.Name] = @{ Id = $plan.Entries[$m.Name].Id; ProtocolHash = $hash } }
+    Write-Sessions $sessionsPath $sessions
+    $startPath = Join-Path $team 'start.json'
+    $branch = [string](git -C $repoRoot branch --show-current)
+    if (Test-ShouldWriteStart (Test-Path $startPath) (@($open | Where-Object { $_.IsMain }).Count -gt 0) $branch) {
+        $start = [ordered]@{ branch = $branch; commit = [string](git -C $repoRoot rev-parse HEAD) }
+        Write-Utf8File $startPath (($start | ConvertTo-Json) + "`n")
+    }
 
     $paneArgs = @()
     foreach ($m in $open) {

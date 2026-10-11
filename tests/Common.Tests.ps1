@@ -58,3 +58,20 @@ Test 'Get-TextHash is stable lowercase hex' {
     Assert-Equal (Get-TextHash 'abc') (Get-TextHash 'abc') 'same input'
     Assert-Match (Get-TextHash 'abc') '^[0-9a-f]{64}$'
 }
+
+Test 'Write-Utf8File -Bom writes a BOM' {
+    $p = Join-Path ([IO.Path]::GetTempPath()) ('tg-' + [guid]::NewGuid().ToString('N') + '.ps1')
+    Write-Utf8File $p 'x' -Bom
+    $bytes = [IO.File]::ReadAllBytes($p)
+    Assert-Equal '239,187,191' (($bytes[0..2]) -join ',') 'BOM bytes'
+}
+
+Test 'a BOM script keeps non-ASCII literals under Windows PowerShell 5.1' {
+    $dir = Join-Path ([IO.Path]::GetTempPath()) ('tg-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+    New-Item -ItemType Directory $dir | Out-Null
+    $out = Join-Path $dir 'out.txt'
+    $word = [string][char]0x1EF1 + 'an'
+    Write-Utf8File (Join-Path $dir 's.ps1') ("[IO.File]::WriteAllText('$out', '$word')") -Bom
+    powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $dir 's.ps1')
+    Assert-Equal $word ([IO.File]::ReadAllText($out)) 'literal written by the child script'
+}

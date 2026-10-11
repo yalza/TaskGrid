@@ -25,3 +25,11 @@ Test 'unity-game preset has one Unity owner in main and Unity rules' {
     Assert-Equal 'main' $owners[0].workspace
     Assert-Match (Get-Content -Raw (Join-Path $root 'team-rules.md')) 'FormerlySerializedAs'
 }
+
+Test 'workflow steps have an owner' {
+    $dir = Join-Path (Split-Path $PSScriptRoot -Parent) 'templates\agents'
+    Assert-Match (Get-Content -Raw "$dir\pm.md") 'things the project rules say must be off'
+    Assert-Match (Get-Content -Raw "$dir\pm.md") 'ask the owner to add a commit that ticks the backlog'
+    Assert-Match (Get-Content -Raw "$dir\qa.md") 'ask the owner to merge'
+    Assert-Match (Get-Content -Raw "$dir\dev.md") 'git fetch'
+}

@@ -1,3 +1,6 @@
+# Tests must not depend on which claude sessions happen to run on this machine.
+function Get-RunningSessionNames { return , @() }
+
 function Get-TeamFixture([string]$Preset = 'basic') {
     $repo = New-TempRepo
     [void](Invoke-TeamInit $repo $Preset)
@@ -77,4 +80,30 @@ Test 'main checkout clean check' {
     Assert-True (Test-MainCheckoutClean $repo) 'clean'
     Set-Content (Join-Path $repo 'b.txt') 'y'
     Assert-True (-not (Test-MainCheckoutClean $repo)) 'dirty'
+}
+
+Test 'members already running are skipped with a warning' {
+    $ctx = Get-TeamContext (Read-TeamConfig (Join-Path (Get-TeamFixture) '.claude\team.json')) 'E:\x\y'
+    $r = Remove-RunningMembers @($ctx.Members) @('crew-pm')
+    Assert-Equal @('dev', 'reviewer') @($r.Members | ForEach-Object { $_.Name })
+    Assert-Match ($r.Warnings -join ';') 'crew-pm is already running'
+}
+
+Test 'start.json is written only when safe' {
+    Assert-True (Test-ShouldWriteStart $false $false 'main') 'missing file, on a branch'
+    Assert-True (-not (Test-ShouldWriteStart $false $false '')) 'missing file, detached HEAD'
+    Assert-True (Test-ShouldWriteStart $true $true 'main') 'main member launched, on a branch'
+    Assert-True (-not (Test-ShouldWriteStart $true $false 'main')) 'existing file, main member not launched'
+}
+
+Test 'config falls back to the main checkout when the worktree has none' {
+    $repo = New-TempRepo
+    $first = (git -C $repo rev-parse HEAD)
+    [void](Invoke-TeamInit $repo 'basic')
+    git -C $repo add -A
+    git -C $repo -c user.email=t@t -c user.name=t commit -q -m team
+    $wt = "$repo-old"
+    git -C $repo worktree add -q -b old $wt $first 2>$null
+    [void](Invoke-TeamMode -Rest @() -Repo $wt -Base 'main' -Preset 'basic' -DryRun)
+    Assert-True (Test-Path (Join-Path "$repo-worktrees" '_team\protocol.md')) 'used the main checkout config'
 }

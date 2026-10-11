@@ -38,11 +38,12 @@ function ConvertTo-PsLiteral([string]$Text) {
     return "'" + ($Text -replace "'", "''") + "'"
 }
 
-# UTF-8 without BOM, LF line endings, so other tools and prompt caching see stable bytes.
-function Write-Utf8File([string]$Path, [string]$Text) {
+# UTF-8 with LF line endings, so other tools and prompt caching see stable bytes. No BOM by
+# default; -Bom for .ps1 files, which Windows PowerShell 5.1 otherwise reads as ANSI.
+function Write-Utf8File([string]$Path, [string]$Text, [switch]$Bom) {
     $dir = Split-Path $Path -Parent
     if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null }
-    [IO.File]::WriteAllText($Path, ($Text -replace "`r`n", "`n"), (New-Object Text.UTF8Encoding $false))
+    [IO.File]::WriteAllText($Path, ($Text -replace "`r`n", "`n"), (New-Object Text.UTF8Encoding ([bool]$Bom)))
 }
 
 function Get-TextHash([string]$Text) {

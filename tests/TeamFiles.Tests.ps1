@@ -109,3 +109,24 @@ Test 'fresh launch makes new ids without warnings' {
     Assert-True ($plan.Entries['pm'].Id -ne 'a') 'new id'
     Assert-Equal 0 @($plan.Warnings).Count
 }
+
+Test 'launch script stops before claude when the workspace is missing' {
+    $c = New-TestContext
+    $s = New-LaunchScript $c $c.Members[0] 'id' $false
+    Assert-True ($s.IndexOf("`$ErrorActionPreference = 'Stop'") -ge 0) 'ErrorActionPreference Stop'
+    Assert-True ($s.IndexOf("`$ErrorActionPreference = 'Stop'") -lt $s.IndexOf('Set-Location')) 'Stop comes before Set-Location'
+}
+
+Test 'transcript path encodes the workspace like Claude Code' {
+    $p = Get-TranscriptPath 'E:\Unity-WorkSpace\_tg-live\app-worktrees\crew-pm' 'abc'
+    Assert-True ($p.EndsWith('\.claude\projects\E--Unity-WorkSpace--tg-live-app-worktrees-crew-pm\abc.jsonl')) $p
+}
+
+Test 'resume needs a transcript, otherwise a new session with a warning' {
+    $sessions = @{ pm = @{ Id = 'a'; ProtocolHash = 'h' }; dev = @{ Id = 'b'; ProtocolHash = 'h' } }
+    $has = { param($name, $id) $name -eq 'pm' }
+    $plan = Get-ResumePlan $sessions @('pm', 'dev') 'h' $true $has
+    Assert-True $plan.Entries['pm'].Resume 'pm resumes'
+    Assert-True (-not $plan.Entries['dev'].Resume) 'dev has no transcript, starts new'
+    Assert-Match ($plan.Warnings -join ';') 'dev: saved session has no transcript'
+}
