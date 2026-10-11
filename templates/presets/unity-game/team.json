@@ -1,0 +1,15 @@
+{
+  "team": "game",
+  "permissionMode": "auto",
+  "unityTools": ["mcp__UnityMCP", "Skill(skill:unity-skills)"],
+  "members": [
+    { "name": "pm",         "agent": "pm",         "model": "sonnet", "effort": "medium", "advisor": "opus" },
+    { "name": "designer",   "agent": "designer",   "model": "sonnet", "effort": "medium" },
+    { "name": "gameplay",   "agent": "dev",        "model": "sonnet", "effort": "medium", "advisor": "opus" },
+    { "name": "tools",      "agent": "dev",        "model": "sonnet", "effort": "medium" },
+    { "name": "artist",     "agent": "artist",     "model": "sonnet", "effort": "medium" },
+    { "name": "integrator", "agent": "integrator", "model": "sonnet", "effort": "medium", "workspace": "main", "unity": true },
+    { "name": "reviewer",   "agent": "reviewer",   "model": "sonnet", "effort": "high", "readonly": true },
+    { "name": "qa",         "agent": "qa",         "model": "sonnet", "effort": "low" }
+  ]
+}
