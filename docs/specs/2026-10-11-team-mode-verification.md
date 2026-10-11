@@ -23,8 +23,10 @@ Claude Code 2.1.296, Windows 11, Windows PowerShell 5.1. Spike scratch: `%TEMP%\
 
 ## Live test 1 (team opens, no work)
 
-- Attempt 1, scratch repo in `%TEMP%`: `grid team` created 3 worktrees and launched `crew-pm`, `crew-dev` and `crew-reviewer` (3 claude processes with the right `--name`), but none appeared in `ListAgents`. In `~/.claude.json`, `%TEMP%` has no trusted parent, so each session waits at the "trust this folder" dialog, and its inbox is not reachable until the user accepts. By contrast, the earlier grid-mode sessions in `E:\Unity-WorkSpace\TileThieves-worktrees\*` opened without a trust prompt, because `E:/Unity-WorkSpace` is trusted (a trusted parent covers children).
-- **Decision:** README tells users to trust the folder that contains their repos once. The live tests move to `E:\Unity-WorkSpace\_tg-live\app` (trusted parent).
+- Attempt 1, scratch repo in `%TEMP%`: `grid team` created 3 worktrees and launched `crew-pm`, `crew-dev` and `crew-reviewer` (3 claude processes with the right `--name`), but none appeared in `ListAgents`. Each session waits at the "trust this folder" dialog, and its inbox is not reachable until the user accepts.
+- Attempt 2, scratch repo in `E:\Unity-WorkSpace\_tg-live\app` (`E:/Unity-WorkSpace` is trusted in `~/.claude.json`): same trust dialog in all 3 panes. **A trusted parent does not cover child folders.** The earlier grid-mode panes in `TileThieves-worktrees` that skipped the dialog were the ones that inherited the child-session variables (the bug fixed in 1.1.1).
+- Layout of 3 panes: `crew-pm` top-left, `crew-dev` right at full height, `crew-reviewer` bottom-left. This matches the design.
+- **Decision:** the user accepts the trust dialog once per member worktree. Reused worktrees keep their trust. The README says so. TaskGrid does not edit `~/.claude.json` to pre-trust folders, because that is the user's security decision.
 
 ## Other notes
 
