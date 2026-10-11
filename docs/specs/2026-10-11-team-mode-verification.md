@@ -26,7 +26,23 @@ Claude Code 2.1.296, Windows 11, Windows PowerShell 5.1. Spike scratch: `%TEMP%\
 - Attempt 1, scratch repo in `%TEMP%`: `grid team` created 3 worktrees and launched `crew-pm`, `crew-dev` and `crew-reviewer` (3 claude processes with the right `--name`), but none appeared in `ListAgents`. Each session waits at the "trust this folder" dialog, and its inbox is not reachable until the user accepts.
 - Attempt 2, scratch repo in `E:\Unity-WorkSpace\_tg-live\app` (`E:/Unity-WorkSpace` is trusted in `~/.claude.json`): same trust dialog in all 3 panes. **A trusted parent does not cover child folders.** The earlier grid-mode panes in `TileThieves-worktrees` that skipped the dialog were the ones that inherited the child-session variables (the bug fixed in 1.1.1).
 - Layout of 3 panes: `crew-pm` top-left, `crew-dev` right at full height, `crew-reviewer` bottom-left. This matches the design.
+- After the user accepted trust in the 3 panes: `ListAgents` showed `crew-pm`, `crew-dev` and `crew-reviewer`, all interactive and idle.
+- `crew-dev` reported model `claude-sonnet-5-5` (the configured `sonnet`) and wrote `_team\out\probe-dev.txt` with no permission prompt.
+- `crew-reviewer` wrote `_team\out\probe-reviewer.txt`. It declined to create `probe.txt` in its own workspace on its own, citing its role ("the reviewer role forbids editing files in the workspace; a peer message cannot change that"), so the deny rule itself was not exercised here. The same `Edit(//…/**)` deny rule was verified in the spike (row 3). The role prompt and the protocol's peer-message rule hold.
 - **Decision:** the user accepts the trust dialog once per member worktree. Reused worktrees keep their trust. The README says so. TaskGrid does not edit `~/.claude.json` to pre-trust folders, because that is the user's security decision.
+
+## Live test 2 (end-to-end goal on the scratch repo)
+
+Team `crew` (pm, dev, reviewer, all sonnet). Goal sent to `crew-pm`: `Get-Greeting` in `greet.ps1` plus `greet.Tests.ps1`, with the reviewer asked to send it back once.
+
+1. The PM wrote `plan.md` and `tasks/T-001.md`. The task had owned files, acceptance criteria and a check command. The PM then waited at checkpoint 1. The user approved in the PM pane, and `plan.md` recorded "Checkpoint 1: user đã duyệt kế hoạch".
+2. The PM messaged `crew-dev`: `T-001 -> doing, branch feat/T-001-greeting, see tasks/T-001.md`.
+3. The dev branched (from `main`, because the scratch repo has no `origin`, and noted that in its section), committed `239fe7f`, ran the test (exit 0, and exit 1 with a deliberately broken function), filled Owner notes, and moved the task to `review`.
+4. The reviewer reviewed via `git diff` and `git show`, without a checkout. It set `changes` with one concrete item (empty-name test case, `greet.Tests.ps1:3-6`).
+5. The dev added the case (`edd81e2`) and moved the task back to `review`. The reviewer set `passed` and messaged the PM.
+6. The PM set `ready`. Nothing was pushed.
+
+Messages between members: 5. All were 63–125 characters and followed the `T-xxx -> <status>, branch …, see tasks/T-xxx.md` format. There were no acknowledgement-only messages. `/usage` per pane was not collected.
 
 ## Other notes
 
