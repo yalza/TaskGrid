@@ -42,6 +42,29 @@ Mỗi ô là một phiên Claude độc lập, kể cả khi gọi `/grid` từ 
 
 `<repo>-worktrees` là thư mục nằm cạnh repo, ví dụ `E:\Work\MyGame-worktrees\` cho `E:\Work\MyGame`.
 
+## Chế độ đội (`/grid team`)
+
+Mở cả một đội Claude theo vai trò (PM, dev, reviewer, Unity integrator, ...). Mỗi người một ô, một model và một bộ rule riêng. Bạn nói chuyện với PM ở ô đầu tiên. PM chia việc, các thành viên nhắn tin cho nhau và ghi chung một bảng task. PM dừng ở hai mốc để bạn duyệt: kế hoạch, và trước khi push hoặc merge.
+
+| Lệnh | Việc làm |
+| --- | --- |
+| `/grid team init -Preset unity-game` | Tạo `.claude/team.json`, `.claude/team-rules.md` và các file vai trò còn thiếu. Preset có sẵn: `basic` (pm, dev, reviewer) và `unity-game` |
+| `/grid team` | Mở cả đội |
+| `/grid team pm gameplay reviewer` | Chỉ mở vài người (PM luôn được mở) |
+| `/grid team -Resume` | Mở lại đúng phiên cũ của từng người |
+| `/grid team -DryRun` | Sinh file và in kế hoạch, không mở cửa sổ |
+
+Muốn đổi người, model hay effort thì sửa `.claude/team.json`. Commit file đó cùng `.claude/agents/` và `.claude/team-rules.md`.
+
+Bảng task, luật chung và log nằm ở `<repo>-worktrees\_team\`, ngoài git. Thiết kế đầy đủ ở `docs/specs/2026-10-11-team-mode-design.md`.
+
+Lưu ý:
+- Thành viên ngồi ở thư mục chính (Unity integrator) yêu cầu thư mục chính sạch. Trong lúc đội chạy, đừng làm việc ở thư mục chính, và tắt các công cụ tự đụng vào git (ví dụ Auto Sync của TileThieves).
+- Worktree mới hỏi "trust this folder" một lần.
+- Lời hỏi quyền hiện trong ô của từng thành viên. PM không duyệt hộ được.
+
+## Mẹo
+
 - **Mở lại task đang làm dở:** gõ lại cùng tên (kể cả `t1`, `t2`, …), worktree và nhánh cũ được dùng lại.
 - **Nhánh an toàn:** nhánh mới tạo với `--no-track`, nên pull/push trong ô không đụng vào `main`.
 - **Dọn task đã merge** (đóng ô đang mở thư mục đó trước, vì Windows khóa thư mục):
