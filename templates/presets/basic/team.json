@@ -1,0 +1,9 @@
+{
+  "team": "crew",
+  "permissionMode": "auto",
+  "members": [
+    { "name": "pm",       "agent": "pm",       "model": "sonnet", "effort": "medium", "advisor": "opus" },
+    { "name": "dev",      "agent": "dev",      "model": "sonnet", "effort": "medium" },
+    { "name": "reviewer", "agent": "reviewer", "model": "sonnet", "effort": "high", "readonly": true }
+  ]
+}
